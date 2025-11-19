@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Smart Parking System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#8b5cf6',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        info: '#06b6d4',
+                        light: '#f8fafc',
+                        dark: '#1e293b',
+                        accent: '#ec4899',
+                        slate: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            600: '#475569',
+                            500: '#64748b',
+                            400: '#94a3b8',
+                            300: '#cbd5e1',
+                            200: '#e2e8f0',
+                            100: '#f1f5f9',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Inter', 'sans-serif'],
+                    },
+                    backgroundImage: {
+                        'gradient-primary': 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                        'gradient-dark': 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e0e7ff 100%);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            transition: all 0.3s ease;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar a {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(180deg, #6366f1, #8b5cf6);
+            transform: translateX(-3px);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar a:hover::before {
+            transform: translateX(0);
+        }
+
+        .sidebar a.active::before {
+            transform: translateX(0);
+        }
+
+        .sidebar .nav-item {
+            color: #cbd5e1;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar a:hover .nav-item,
+        .sidebar a.active .nav-item {
+            color: #ffffff;
+        }
+
+        .sidebar a.active {
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-hover::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2), 
+                        0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-hover:hover::before {
+            opacity: 1;
+        }
+
+        .card-glow {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .stat-card.primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .stat-card.danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .pulse {
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+            }
+            50% { 
+                opacity: 0.8;
+            }
+            100% { 
+                box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+            }
+        }
+
+        .slot {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        .slot::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .slot:active::after {
+            width: 300px;
+            height: 300px;
+        }
+
+        .slot:hover {
+            transform: scale(1.08) rotate(2deg);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .notification-item {
+            animation: slideInRight 0.5s ease;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notification-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(180deg, #6366f1, #8b5cf6);
+        }
+
+        @keyframes slideInRight {
+            from { 
+                transform: translateX(100%) rotateY(90deg);
+                opacity: 0;
+            }
+            to { 
+                transform: translateX(0) rotateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .btn-logout:hover {
+            color: #ef4444;
+            transform: rotate(90deg);
+        }
+
+        .btn-logout {
+            transition: all 0.3s ease;
+        }
+
+        .logo-icon {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .icon-box {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            color: #6366f1;
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card.primary .icon-box {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .icon-box:hover {
+            transform: scale(1.1) rotate(-10deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="sidebar w-64 flex flex-col">
+            <!-- Logo -->
+            <div class="p-6 border-b border-slate-700">
+                <div class="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center logo-icon">
+                        <i class="fas fa-parking text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">SmartPark</h1>
+                        <p class="text-xs text-slate-400">IoT Parking</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="flex-1 p-4 overflow-y-auto">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" class="flex items-center p-3 rounded-xl font-medium active">
+                            <i class="fas fa-tachometer-alt mr-3 nav-item"></i>
+                            <span class="nav-item">Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center p-3 rounded-xl font-medium">
+                            <i class="fas fa-id-card mr-3 nav-item"></i>
+                            <span class="nav-item">Data RFID</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center p-3 rounded-xl font-medium">
+                            <i class="fas fa-car mr-3 nav-item"></i>
+                            <span class="nav-item">Monitoring Slot</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center p-3 rounded-xl font-medium">
+                            <i class="fas fa-microchip mr-3 nav-item"></i>
+                            <span class="nav-item">Sensor Status</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center p-3 rounded-xl font-medium">
+                            <i class="fas fa-bell mr-3 nav-item"></i>
+                            <span class="nav-item">Notifikasi</span>
+                            <span class="ml-auto bg-danger text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- User Info -->
+            <div class="p-4 border-t border-slate-700">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center text-white font-bold text-sm">
+                        A
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-slate-100 truncate">Admin User</p>
+                        <p class="text-xs text-slate-400 truncate">Administrator</p>
+                    </div>
+                    <button id="logoutBtn" class="text-slate-400 hover:text-danger btn-logout p-2 rounded-lg hover:bg-slate-700 transition-all">
+                        <i class="fas fa-sign-out-alt text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="header sticky top-0 z-10">
+                <div class="flex items-center justify-between p-6">
+                    <div>
+                        <h2 class="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Admin Dashboard</h2>
+                        <p class="text-sm text-slate-500 mt-1">Smart Parking IoT System</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative group">
+                            <button class="text-slate-600 hover:text-primary transition-colors p-2 rounded-lg hover:bg-slate-100">
+                                <i class="fas fa-bell text-xl"></i>
+                                <span class="absolute -top-1 -right-1 bg-danger text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">3</span>
+                            </button>
+                            <div class="absolute right-0 mt-0 w-80 bg-white rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-4">
+                                <p class="text-sm font-semibold text-slate-900 mb-2">Notifikasi Terbaru</p>
+                                <p class="text-xs text-slate-500">Tidak ada notifikasi baru</p>
+                            </div>
+                        </div>
+                        <button class="text-slate-600 hover:text-primary transition-colors p-2 rounded-lg hover:bg-slate-100">
+                            <i class="fas fa-cog text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto p-8">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="stat-card card-hover shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-600">Total Masuk Hari Ini</p>
+                                <p class="text-3xl font-bold text-slate-900 mt-2">42</p>
+                            </div>
+                            <div class="icon-box">
+                                <i class="fas fa-sign-in-alt"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-sm">
+                            <span class="text-success flex items-center font-semibold">
+                                <i class="fas fa-arrow-up mr-1"></i> 12%
+                            </span>
+                            <span class="text-slate-500 ml-2">dari kemarin</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card card-hover shadow-lg success">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-white opacity-90">Total Keluar Hari Ini</p>
+                                <p class="text-3xl font-bold text-white mt-2">38</p>
+                            </div>
+                            <div class="icon-box">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-sm">
+                            <span class="text-white flex items-center font-semibold">
+                                <i class="fas fa-arrow-up mr-1"></i> 8%
+                            </span>
+                            <span class="text-white opacity-70 ml-2">dari kemarin</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card card-hover shadow-lg warning">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-white opacity-90">Parkir Aktif</p>
+                                <p class="text-3xl font-bold text-white mt-2">24</p>
+                            </div>
+                            <div class="icon-box">
+                                <i class="fas fa-car"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-sm">
+                            <span class="text-white flex items-center font-semibold">
+                                <i class="fas fa-arrow-down mr-1"></i> 5%
+                            </span>
+                            <span class="text-white opacity-70 ml-2">dari kemarin</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card card-hover shadow-lg danger">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-white opacity-90">Slot Tersedia</p>
+                                <p class="text-3xl font-bold text-white mt-2">16</p>
+                            </div>
+                            <div class="icon-box">
+                                <i class="fas fa-parking"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-center text-sm">
+                            <span class="text-white flex items-center font-semibold">
+                                <i class="fas fa-arrow-up mr-1"></i> 20%
+                            </span>
+                            <span class="text-white opacity-70 ml-2">dari kemarin</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <!-- Parking Grid -->
+                    <div class="lg:col-span-2 stat-card shadow-lg">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-slate-900">Status Slot Parkir</h3>
+                            <div class="flex space-x-4 text-sm">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded-full bg-gradient-primary mr-2"></div>
+                                    <span class="text-slate-600 font-medium">Kosong</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded-full bg-danger mr-2"></div>
+                                    <span class="text-slate-600 font-medium">Terisi</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-5 gap-3">
+                            <!-- Slot Parkir -->
+                            <div class="slot bg-gradient-primary text-white font-medium rounded-lg p-4 text-center shadow-lg">
+                                <p class="font-bold text-lg">A1</p>
+                                <p class="text-xs mt-2 opacity-90">Kosong</p>
+                            </div>
+                            <div class="slot bg-danger text-white font-medium rounded-lg p-4 text-center shadow-lg">
+                                <p class="font-bold text-lg">A2</p>
+                                <p class="text-xs mt-2 opacity-90">Terisi</p>
+                            </div>
+                            <div class="slot bg-gradient-primary text-white font-medium rounded-lg p-4 text-center shadow-lg">
+                                <p class="font-bold text-lg">A3</p>
+                                <p class="text-xs mt-2 opacity-90">Kosong</p>
+                            </div>
+                            <div class="slot bg-danger text-white font-medium rounded-lg p-4 text-center shadow-lg">
+                                <p class="font-bold text-lg">A4</p>
+                                <p class="text-xs mt-2 opacity-90">Terisi</p>
+                            </div>
+                            <div class="slot bg-gradient-primary text-white font-medium rounded-lg p-4 text-center shadow-lg">
+                                <p class="font-bold text-lg">A5</p>
+                                <p class="text-xs mt-2 opacity-90">Kosong</p>
+                            </div>
+                            <div class="slot bg-gradient-primary text-white font-medium rounded-lg p-4 text-center shadow-lg">
+                                <p class="font-bold text-lg">B1</p>
+                                <p class="text-xs mt-2 opacity-90">Kosong</p>
+                            </div>
+                            <div class="slot bg-danger text-white font-medium rounded-lg p-4 text-center shadow-lg">
+                                <p class="font-bold text-lg">B2</p>
+                                <p class="text-xs mt-2 opacity-90">Terisi</p>
+                            </div>
+                            <div class="slot bg-danger text-white font-medium rounded-lg p-4 text-center shadow-lg">
+                                <p class="font-bold text-lg">B3</p>
+                                <p class="text-xs mt-2 opacity-90">Terisi</p>
+                            </div>
+                            <div class="slot bg-gradient-primary text-white font-medium rounded-lg p-4 text-center shadow-lg">
+                                <p class="font-bold text-lg">B4</p>
+                                <p class="text-xs mt-2 opacity-90">Kosong</p>
+                            </div>
+                            <div class="slot bg-gradient-primary text-white font-medium rounded-lg p-4 text-center shadow-lg">
+                                <p class="font-bold text-lg">B5</p>
+                                <p class="text-xs mt-2 opacity-90">Kosong</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sensor Status -->
+                    <div class="stat-card shadow-lg">
+                        <h3 class="text-xl font-bold text-slate-900 mb-6">Status Sensor</h3>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl hover:shadow-lg transition-all">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center mr-4">
+                                        <i class="fas fa-id-card text-white"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-slate-900">RFID Sensor</p>
+                                        <p class="text-sm text-slate-500">Pintu Masuk</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded-full bg-success mr-2 animate-pulse"></div>
+                                    <span class="text-sm font-semibold text-success">Aktif</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl hover:shadow-lg transition-all">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center mr-4">
+                                        <i class="fas fa-wave-square text-white"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-slate-900">Ultrasonic Sensor</p>
+                                        <p class="text-sm text-slate-500">Deteksi Slot</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded-full bg-success mr-2 animate-pulse"></div>
+                                    <span class="text-sm font-semibold text-success">Aktif</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-xl hover:shadow-lg transition-all">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 rounded-lg bg-danger flex items-center justify-center mr-4">
+                                        <i class="fas fa-lightbulb text-white"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-slate-900">Light Sensor</p>
+                                        <p class="text-sm text-slate-500">Deteksi Garis</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded-full bg-danger mr-2 pulse"></div>
+                                    <span class="text-sm font-semibold text-danger">Error</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- RFID Logs -->
+                    <div class="stat-card shadow-lg">
+                        <h3 class="text-xl font-bold text-slate-900 mb-6">Log RFID Terbaru</h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead>
+                                    <tr class="bg-gradient-to-r from-slate-50 to-slate-100">
+                                        <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">ID RFID</th>
+                                        <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Waktu</th>
+                                        <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200">
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-4 py-3 text-sm font-semibold text-slate-900">RFID-7A3B9C</td>
+                                        <td class="px-4 py-3 text-sm text-slate-500">14:32:05</td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-100 to-green-200 text-green-700">
+                                                ✓ Masuk
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-4 py-3 text-sm font-semibold text-slate-900">RFID-4D2E8F</td>
+                                        <td class="px-4 py-3 text-sm text-slate-500">14:25:41</td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700">
+                                                ← Keluar
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-4 py-3 text-sm font-semibold text-slate-900">RFID-1B5C7D</td>
+                                        <td class="px-4 py-3 text-sm text-slate-500">14:18:22</td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-100 to-green-200 text-green-700">
+                                                ✓ Masuk
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-4 py-3 text-sm font-semibold text-slate-900">RFID-9E3A6B</td>
+                                        <td class="px-4 py-3 text-sm text-slate-500">14:05:57</td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700">
+                                                ← Keluar
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-4 py-3 text-sm font-semibold text-slate-900">RFID-2F8C4A</td>
+                                        <td class="px-4 py-3 text-sm text-slate-500">13:52:33</td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-green-100 to-green-200 text-green-700">
+                                                ✓ Masuk
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <div class="stat-card shadow-lg">
+                        <h3 class="text-xl font-bold text-slate-900 mb-6">Notifikasi Real-time</h3>
+                        
+                        <div class="space-y-3 max-h-96 overflow-y-auto">
+                            <div class="notification-item p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-xl">
+                                <div class="flex">
+                                    <div class="flex-shrink-0 mr-3">
+                                        <i class="fas fa-exclamation-triangle text-danger text-lg"></i>
+                                    </div>
+                                    <div class="flex-grow">
+                                        <p class="text-sm font-bold text-danger">Sensor Cahaya Error</p>
+                                        <p class="text-sm text-slate-600 mt-1">Sensor cahaya di slot B3 tidak berfungsi dengan baik.</p>
+                                        <p class="text-xs text-slate-500 mt-2">⏱ 2 menit yang lalu</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="notification-item p-4 bg-gradient-to-r from-warning/20 to-orange-100 rounded-xl">
+                                <div class="flex">
+                                    <div class="flex-shrink-0 mr-3">
+                                        <i class="fas fa-car text-warning text-lg"></i>
+                                    </div>
+                                    <div class="flex-grow">
+                                        <p class="text-sm font-bold text-orange-700">Parkir Tidak Sesuai Garis</p>
+                                        <p class="text-sm text-slate-600 mt-1">Kendaraan di slot A2 parkir tidak sesuai dengan garis.</p>
+                                        <p class="text-xs text-slate-500 mt-2">⏱ 15 menit yang lalu</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="notification-item p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl">
+                                <div class="flex">
+                                    <div class="flex-shrink-0 mr-3">
+                                        <i class="fas fa-info-circle text-blue-500 text-lg"></i>
+                                    </div>
+                                    <div class="flex-grow">
+                                        <p class="text-sm font-bold text-blue-700">Parkir Hampir Penuh</p>
+                                        <p class="text-sm text-slate-600 mt-1">Hanya tersisa 4 slot parkir kosong.</p>
+                                        <p class="text-xs text-slate-500 mt-2">⏱ 1 jam yang lalu</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="notification-item p-4 bg-gradient-to-r from-warning/20 to-orange-100 rounded-xl">
+                                <div class="flex">
+                                    <div class="flex-shrink-0 mr-3">
+                                        <i class="fas fa-car text-warning text-lg"></i>
+                                    </div>
+                                    <div class="flex-grow">
+                                        <p class="text-sm font-bold text-orange-700">Parkir Tidak Sesuai Garis</p>
+                                        <p class="text-sm text-slate-600 mt-1">Kendaraan di slot B2 parkir tidak sesuai dengan garis.</p>
+                                        <p class="text-xs text-slate-500 mt-2">⏱ 2 jam yang lalu</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // PROTEKSI HALAMAN - CEK LOGIN STATUS
+        // ============================================
+        window.addEventListener('DOMContentLoaded', function() {
+            // Cek apakah user sudah login
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                // Jika belum login, redirect ke halaman login
+                window.location.href = 'login.html';
+            } else {
+                // Tampilkan nama user di sidebar
+                const username = localStorage.getItem('username');
+                const userInitial = username ? username.charAt(0).toUpperCase() : 'A';
+                const userNameElem = document.querySelector('.flex-1 p:first-child');
+                if (userNameElem) {
+                    userNameElem.textContent = username || 'Admin User';
+                }
+                const userInitialElem = document.querySelector('.w-10.h-10.rounded-full.bg-primary');
+                if (userInitialElem) {
+                    userInitialElem.textContent = userInitial;
+                }
+            }
+        });
+
+        // ============================================
+        // HANDLE LOGOUT
+        // ============================================
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Confirm logout
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                // Hapus data login dari localStorage
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('username');
+                
+                // Redirect ke halaman login
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Simulasi pembaruan data real-time
+        function updateData() {
+            // Update waktu terakhir refresh
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+            
+            // Simulasi perubahan status slot parkir secara acak
+            const slots = document.querySelectorAll('.slot');
+            slots.forEach(slot => {
+                if (Math.random() > 0.7) {
+                    if (slot.classList.contains('bg-primary')) {
+                        slot.classList.remove('bg-primary');
+                        slot.classList.add('bg-danger');
+                        slot.querySelector('p:last-child').textContent = 'Terisi';
+                    } else {
+                        slot.classList.remove('bg-danger');
+                        slot.classList.add('bg-primary');
+                        slot.querySelector('p:last-child').textContent = 'Kosong';
+                    }
+                }
+            });
+            
+            // Update statistik
+            const availableSlots = document.querySelectorAll('.slot.bg-primary').length;
+            document.querySelector('div.bg-white.rounded-xl.shadow-sm.p-6.card-hover:last-child .text-2xl').textContent = availableSlots;
+            document.querySelector('div.bg-white.rounded-xl.shadow-sm.p-6.card-hover:nth-child(3) .text-2xl').textContent = 30 - availableSlots;
+        }
+        
+        // Update data setiap 10 detik
+        setInterval(updateData, 10000);
+        
+        // Animasi notifikasi baru
+        function addNotification(title, message, type) {
+            const notificationsContainer = document.querySelector('.space-y-4.max-h-96');
+            
+            const notification = document.createElement('div');
+            notification.className = `notification-item p-4 ${type}-50 border-l-4 border-${type}-500 rounded-r-lg`;
+            
+            let icon = 'info-circle';
+            if (type === 'red') icon = 'exclamation-triangle';
+            if (type === 'yellow') icon = 'car';
+            
+            notification.innerHTML = `
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-${icon} text-${type}-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-${type}-800">${title}</p>
+                        <p class="text-sm text-${type}-700 mt-1">${message}</p>
+                        <p class="text-xs text-${type}-600 mt-1">Baru saja</p>
+                    </div>
+                </div>
+            `;
+            
+            notificationsContainer.insertBefore(notification, notificationsContainer.firstChild);
+            
+            // Hapus notifikasi setelah 10 detik
+            setTimeout(() => {
+                notification.remove();
+            }, 10000);
+        }
+        
+        // Simulasi notifikasi acak
+        setInterval(() => {
+            if (Math.random() > 0.7) {
+                const types = ['yellow', 'blue'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                
+                if (type === 'yellow') {
+                    addNotification(
+                        'Parkir Tidak Sesuai Garis', 
+                        'Kendaraan di slot A4 parkir tidak sesuai dengan garis.', 
+                        'yellow'
+                    );
+                } else {
+                    addNotification(
+                        'Kendaraan Masuk', 
+                        'Kendaraan baru telah masuk area parkir.', 
+                        'blue'
+                    );
+                }
+            }
+        }, 15000);
+    </script>
+</body>
+</html>

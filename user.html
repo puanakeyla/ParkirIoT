@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Parking - User Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#8b5cf6',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        info: '#06b6d4',
+                        light: '#f8fafc',
+                        dark: '#1e293b',
+                        gopay: '#00AAEE',
+                        ovo: '#4C2A86',
+                        dana: '#108EE9',
+                        shopeepay: '#FF5F00'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .slot {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .slot:hover {
+            transform: scale(1.05);
+        }
+        
+        .slot.available {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .slot.occupied {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .slot.reserved {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .slot.user-slot {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            animation: pulse 2s infinite;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .hero {
+            position: relative;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            background-color: #0f172a;
+            background-image:
+                radial-gradient(600px 300px at 10% 20%, rgba(99,102,241,0.06), transparent 12%),
+                radial-gradient(500px 240px at 90% 80%, rgba(139,92,246,0.05), transparent 14%),
+                linear-gradient(180deg, #0f172a 0%, #0b1220 60%);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(2,6,23,0.45) 0%, rgba(2,6,23,0.25) 60%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            padding: 14px 20px;
+        }
+
+        .main-card {
+            margin-top: 16px;
+            padding-top: 12px;
+        }
+
+        .payment-method {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .payment-method:hover {
+            transform: translateY(-2px);
+            border-color: #6366f1;
+        }
+        
+        .payment-method.selected {
+            border-color: #6366f1;
+            background-color: #f0f4ff;
+        }
+
+        .notification-item {
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from { 
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to { 
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .main-card { margin-top: 20px; }
+        }
+
+        @media (max-width: 640px) {
+            .hero { height: 160px; }
+            .main-card { margin-top: 8px; padding-top: 8px; }
+        }
+    </style>
+</head>
+<body class="min-h-screen font-sans">
+    <!-- Hero banner -->
+    <section class="hero">
+        <div class="hero-overlay" aria-hidden="true"></div>
+        <div class="hero-content">
+            <h1 class="text-3xl md:text-4xl font-bold">SmartPark</h1>
+            <p class="mt-2 text-sm md:text-base opacity-90">Parkir Mudah dengan Pembayaran Digital</p>
+        </div>
+    </section>
+
+    <!-- Header -->
+    <header class="glass-effect sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
+                        <i class="fas fa-parking text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-800">SmartPark User</h1>
+                        <p class="text-sm text-slate-600">Parking Made Easy</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- RFID Info -->
+                    <div class="bg-white rounded-lg px-4 py-2 shadow-sm">
+                        <p class="text-xs text-slate-500">ID RFID Anda</p>
+                        <p class="text-sm font-bold text-primary" id="userRfid">RFID-7A3B9C</p>
+                    </div>
+                    
+                    <!-- Saldo E-Wallet -->
+                    <div class="bg-white rounded-lg px-4 py-2 shadow-sm">
+                        <p class="text-xs text-slate-500">Saldo</p>
+                        <p class="text-sm font-bold text-green-600" id="userBalance">Rp 125.000</p>
+                    </div>
+                    
+                    <!-- User Info -->
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white font-bold" id="userAvatar">
+                            P
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-slate-800" id="userName">Puan Akeyla</p>
+                            <p class="text-xs text-slate-600">Pengguna</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 main-card">
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-600">Slot Tersedia</p>
+                        <p class="text-3xl font-bold text-slate-800" id="availableSlots">16</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                        <i class="fas fa-parking text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-600">Total Slot</p>
+                        <p class="text-3xl font-bold text-slate-800">30</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-layer-group text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-600">Status Anda</p>
+                        <p class="text-lg font-bold text-green-600" id="userStatus">Sedang Parkir</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
+                        <i class="fas fa-user text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-600">Biaya Parkir</p>
+                        <p class="text-3xl font-bold text-slate-800" id="parkingFee">Rp 15.000</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-lg bg-yellow-100 flex items-center justify-center">
+                        <i class="fas fa-money-bill-wave text-yellow-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parking Map -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-slate-800">Peta Parkir Real-time</h2>
+                <div class="flex items-center space-x-4 text-sm">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+                        <span class="text-slate-600">Tersedia</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+                        <span class="text-slate-600">Terisi</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-blue-500 mr-2 pulse"></div>
+                        <span class="text-slate-600">Slot Anda</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Parking Grid -->
+            <div class="grid grid-cols-5 gap-4 mb-8">
+                <!-- Baris A -->
+                <div class="slot available rounded-lg p-4 text-center text-white font-medium" data-slot="A1">
+                    <p class="font-bold text-lg">A1</p>
+                    <p class="text-xs mt-1 opacity-90">Tersedia</p>
+                </div>
+                <div class="slot occupied rounded-lg p-4 text-center text-white font-medium" data-slot="A2">
+                    <p class="font-bold text-lg">A2</p>
+                    <p class="text-xs mt-1 opacity-90">Terisi</p>
+                </div>
+                <div class="slot available rounded-lg p-4 text-center text-white font-medium" data-slot="A3">
+                    <p class="font-bold text-lg">A3</p>
+                    <p class="text-xs mt-1 opacity-90">Tersedia</p>
+                </div>
+                <div class="slot occupied rounded-lg p-4 text-center text-white font-medium" data-slot="A4">
+                    <p class="font-bold text-lg">A4</p>
+                    <p class="text-xs mt-1 opacity-90">Terisi</p>
+                </div>
+                <div class="slot available rounded-lg p-4 text-center text-white font-medium" data-slot="A5">
+                    <p class="font-bold text-lg">A5</p>
+                    <p class="text-xs mt-1 opacity-90">Tersedia</p>
+                </div>
+                
+                <!-- Baris B -->
+                <div class="slot available rounded-lg p-4 text-center text-white font-medium" data-slot="B1">
+                    <p class="font-bold text-lg">B1</p>
+                    <p class="text-xs mt-1 opacity-90">Tersedia</p>
+                </div>
+                <div class="slot occupied rounded-lg p-4 text-center text-white font-medium" data-slot="B2">
+                    <p class="font-bold text-lg">B2</p>
+                    <p class="text-xs mt-1 opacity-90">Terisi</p>
+                </div>
+                <div class="slot user-slot rounded-lg p-4 text-center text-white font-medium" data-slot="B3">
+                    <p class="font-bold text-lg">B3</p>
+                    <p class="text-xs mt-1 opacity-90">Slot Anda</p>
+                    <i class="fas fa-user text-xs mt-1"></i>
+                </div>
+                <div class="slot available rounded-lg p-4 text-center text-white font-medium" data-slot="B4">
+                    <p class="font-bold text-lg">B4</p>
+                    <p class="text-xs mt-1 opacity-90">Tersedia</p>
+                </div>
+                <div class="slot available rounded-lg p-4 text-center text-white font-medium" data-slot="B5">
+                    <p class="font-bold text-lg">B5</p>
+                    <p class="text-xs mt-1 opacity-90">Tersedia</p>
+                </div>
+            </div>
+            
+            <!-- Parking Info & Payment -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Parking Info -->
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-info-circle text-blue-500 text-xl mr-3"></i>
+                        <div>
+                            <p class="font-semibold text-blue-800">Info Parkir Anda</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-blue-700">Slot:</span>
+                            <span class="font-bold text-blue-800">B3</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-blue-700">Waktu Masuk:</span>
+                            <span class="font-bold text-blue-800" id="parkingTime">14:32:05</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-blue-700">Durasi:</span>
+                            <span class="font-bold text-blue-800" id="parkingDuration">2 jam 15 menit</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-blue-700">Biaya:</span>
+                            <span class="font-bold text-blue-800" id="currentFee">Rp 15.000</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Action -->
+                <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-credit-card text-green-500 text-xl mr-3"></i>
+                        <div>
+                            <p class="font-semibold text-green-800">Pembayaran Parkir</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-green-700 mb-3">Bayar parkir Anda sekarang dengan metode digital</p>
+                    <button id="payNowBtn" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-semibold transition">
+                        <i class="fas fa-wallet mr-2"></i>Bayar Sekarang
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Riwayat Parkir & Pembayaran -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">Riwayat Parkir & Pembayaran</h3>
+                
+                <div class="space-y-3 max-h-80 overflow-y-auto">
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-600 mr-3"></i>
+                            <div>
+                                <p class="font-semibold text-slate-800">Pembayaran Berhasil</p>
+                                <p class="text-sm text-slate-600">Slot B3 - GoPay - Rp 15.000</p>
+                            </div>
+                        </div>
+                        <span class="text-sm font-medium text-green-600">Hari ini</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-sign-out-alt text-blue-600 mr-3"></i>
+                            <div>
+                                <p class="font-semibold text-slate-800">Parkir Selesai</p>
+                                <p class="text-sm text-slate-600">Slot A2 - OVO - Rp 12.000</p>
+                            </div>
+                        </div>
+                        <span class="text-sm font-medium text-blue-600">Kemarin</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-600 mr-3"></i>
+                            <div>
+                                <p class="font-semibold text-slate-800">Pembayaran Berhasil</p>
+                                <p class="text-sm text-slate-600">Slot A2 - Dana - Rp 12.000</p>
+                            </div>
+                        </div>
+                        <span class="text-sm font-medium text-green-600">Kemarin</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-sign-out-alt text-blue-600 mr-3"></i>
+                            <div>
+                                <p class="font-semibold text-slate-800">Parkir Selesai</p>
+                                <p class="text-sm text-slate-600">Slot C1 - ShopeePay - Rp 8.000</p>
+                            </div>
+                        </div>
+                        <span class="text-sm font-medium text-blue-600">2 hari lalu</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-600 mr-3"></i>
+                            <div>
+                                <p class="font-semibold text-slate-800">Pembayaran Berhasil</p>
+                                <p class="text-sm text-slate-600">Slot C1 - GoPay - Rp 8.000</p>
+                            </div>
+                        </div>
+                        <span class="text-sm font-medium text-green-600">2 hari lalu</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status RFID & Notifikasi -->
+            <div class="space-y-6">
+                <!-- Status RFID -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4">Status RFID & E-Wallet</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-id-card text-green-600 text-xl mr-3"></i>
+                                <div>
+                                    <p class="font-semibold text-slate-800">Status RFID</p>
+                                    <p class="text-sm text-slate-600">Aktif dan terdaftar</p>
+                                </div>
+                            </div>
+                            <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">
+                                AKTIF
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-wallet text-blue-600 text-xl mr-3"></i>
+                                <div>
+                                    <p class="font-semibold text-slate-800">E-Wallet Terhubung</p>
+                                    <p class="text-sm text-slate-600">GoPay, OVO, Dana</p>
+                                </div>
+                            </div>
+                            <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">
+                                AKTIF
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-car text-purple-600 text-xl mr-3"></i>
+                                <div>
+                                    <p class="font-semibold text-slate-800">Kendaraan Terdaftar</p>
+                                    <p class="text-sm text-slate-600">B 1234 XYZ</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notifikasi -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4">Notifikasi</h3>
+                    
+                    <div class="space-y-3" id="notificationsContainer">
+                        <div class="notification-item flex items-start p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                            <i class="fas fa-clock text-yellow-600 mt-1 mr-3"></i>
+                            <div>
+                                <p class="font-semibold text-slate-800">Parkir Anda Aktif</p>
+                                <p class="text-sm text-slate-600">Puan Akeyla parkir di Slot B3 sejak 14:32</p>
+                            </div>
+                        </div>
+                        
+                        <div class="notification-item flex items-start p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                            <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+                            <div>
+                                <p class="font-semibold text-slate-800">Pembayaran Digital</p>
+                                <p class="text-sm text-slate-600">Bayar parkir dengan GoPay/OVO/Dana</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-white mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center">
+                <p class="text-sm">&copy; 2024 SmartPark System. All rights reserved.</p>
+                <p class="text-xs text-slate-400 mt-2">Status Terakhir Update: <span id="lastUpdate">-</span></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-800">Pembayaran Parkir</h3>
+                <button id="closePaymentModal" class="text-slate-400 hover:text-slate-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                    <div class="text-center">
+                        <p class="text-sm text-blue-700">Total Pembayaran</p>
+                        <p class="text-2xl font-bold text-blue-800" id="paymentAmount">Rp 15.000</p>
+                        <p class="text-xs text-blue-600 mt-1">Slot B3 • 2 jam 15 menit</p>
+                    </div>
+                </div>
+                
+                <div>
+                    <p class="font-semibold text-slate-800 mb-3">Pilih Metode Pembayaran</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="payment-method bg-white border border-slate-200 rounded-lg p-4 text-center cursor-pointer" data-method="gopay">
+                            <div class="w-12 h-12 rounded-full bg-gopay flex items-center justify-center mx-auto mb-2">
+                                <i class="fab fa-google-pay text-white text-xl"></i>
+                            </div>
+                            <p class="font-medium text-slate-800">GoPay</p>
+                            <p class="text-xs text-slate-600">Saldo: Rp 85.000</p>
+                        </div>
+                        
+                        <div class="payment-method bg-white border border-slate-200 rounded-lg p-4 text-center cursor-pointer" data-method="ovo">
+                            <div class="w-12 h-12 rounded-full bg-ovo flex items-center justify-center mx-auto mb-2">
+                                <span class="text-white font-bold text-lg">OVO</span>
+                            </div>
+                            <p class="font-medium text-slate-800">OVO</p>
+                            <p class="text-xs text-slate-600">Saldo: Rp 125.000</p>
+                        </div>
+                        
+                        <div class="payment-method bg-white border border-slate-200 rounded-lg p-4 text-center cursor-pointer" data-method="dana">
+                            <div class="w-12 h-12 rounded-full bg-dana flex items-center justify-center mx-auto mb-2">
+                                <span class="text-white font-bold text-sm">DANA</span>
+                            </div>
+                            <p class="font-medium text-slate-800">Dana</p>
+                            <p class="text-xs text-slate-600">Saldo: Rp 65.000</p>
+                        </div>
+                        
+                        <div class="payment-method bg-white border border-slate-200 rounded-lg p-4 text-center cursor-pointer" data-method="shopeepay">
+                            <div class="w-12 h-12 rounded-full bg-shopeepay flex items-center justify-center mx-auto mb-2">
+                                <span class="text-white font-bold text-xs">SPay</span>
+                            </div>
+                            <p class="font-medium text-slate-800">ShopeePay</p>
+                            <p class="text-xs text-slate-600">Saldo: Rp 45.000</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="confirmPayment" class="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <i class="fas fa-lock mr-2"></i>Bayar Sekarang
+            </button>
+            
+            <p class="text-xs text-slate-500 text-center mt-3">
+                Dengan melanjutkan, Anda menyetujui syarat dan ketentuan pembayaran
+            </p>
+        </div>
+    </div>
+
+    <!-- Payment Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4 text-center">
+            <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-green-500 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Pembayaran Berhasil!</h3>
+            <p class="text-slate-600 mb-4">Pembayaran parkir Anda telah berhasil diproses.</p>
+            <div class="bg-green-50 rounded-lg p-4 mb-4">
+                <p class="text-sm text-green-700">Total Pembayaran</p>
+                <p class="text-lg font-bold text-green-800" id="successAmount">Rp 15.000</p>
+                <p class="text-xs text-green-600 mt-1" id="successMethod">GoPay • Slot B3</p>
+            </div>
+            <button id="closeSuccessModal" class="w-full bg-green-500 text-white py-2 rounded-lg font-semibold hover:bg-green-600 transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // RESET LOCALSTORAGE - PASTIKAN DATA BARU
+        // ============================================
+        localStorage.removeItem('userData');
+        localStorage.removeItem('userToken');
+
+        // ============================================
+        // PROTEKSI HALAMAN USER
+        // ============================================
+        window.addEventListener('DOMContentLoaded', function() {
+            // Cek apakah user sudah login (untuk user biasa)
+            const userToken = localStorage.getItem('userToken');
+            const userData = localStorage.getItem('userData');
+            
+            if (!userToken) {
+                // Redirect ke halaman login user
+                window.location.href = 'user-login.html';
+                return;
+            }
+            
+            // Load user data
+            if (userData) {
+                const user = JSON.parse(userData);
+                document.getElementById('userName').textContent = user.name || 'Puan Akeyla';
+                document.getElementById('userRfid').textContent = user.rfid || 'RFID-7A3B9C';
+                document.getElementById('userBalance').textContent = user.balance || 'Rp 125.000';
+                
+                // Set user status
+                if (user.status === 'parked') {
+                    document.getElementById('userStatus').textContent = 'Sedang Parkir';
+                    document.getElementById('userStatus').className = 'text-lg font-bold text-green-600';
+                } else {
+                    document.getElementById('userStatus').textContent = 'Tidak Parkir';
+                    document.getElementById('userStatus').className = 'text-lg font-bold text-slate-600';
+                }
+                
+                // Set initial user di header
+                const userInitialElem = document.getElementById('userAvatar');
+                if (userInitialElem) {
+                    userInitialElem.textContent = user.name ? user.name.charAt(0).toUpperCase() : 'P';
+                }
+            }
+            
+            // Update waktu
+            updateLastUpdate();
+            
+            // Update available slots count
+            updateAvailableSlots();
+            
+            // Initialize payment functionality
+            initializePayment();
+        });
+
+        // ============================================
+        // FITUR PEMBAYARAN DIGITAL
+        // ============================================
+        let selectedPaymentMethod = null;
+        
+        function initializePayment() {
+            // Pay Now Button
+            document.getElementById('payNowBtn').addEventListener('click', function() {
+                document.getElementById('paymentModal').classList.remove('hidden');
+            });
+            
+            // Close Payment Modal
+            document.getElementById('closePaymentModal').addEventListener('click', function() {
+                document.getElementById('paymentModal').classList.add('hidden');
+                resetPaymentSelection();
+            });
+            
+            // Payment Method Selection
+            document.querySelectorAll('.payment-method').forEach(method => {
+                method.addEventListener('click', function() {
+                    // Remove previous selection
+                    document.querySelectorAll('.payment-method').forEach(m => {
+                        m.classList.remove('selected');
+                    });
+                    
+                    // Add selection to clicked method
+                    this.classList.add('selected');
+                    selectedPaymentMethod = this.getAttribute('data-method');
+                    
+                    // Enable confirm button
+                    document.getElementById('confirmPayment').disabled = false;
+                });
+            });
+            
+            // Confirm Payment
+            document.getElementById('confirmPayment').addEventListener('click', function() {
+                if (selectedPaymentMethod) {
+                    processPayment(selectedPaymentMethod);
+                }
+            });
+            
+            // Close Success Modal
+            document.getElementById('closeSuccessModal').addEventListener('click', function() {
+                document.getElementById('successModal').classList.add('hidden');
+            });
+        }
+        
+        function resetPaymentSelection() {
+            selectedPaymentMethod = null;
+            document.querySelectorAll('.payment-method').forEach(m => {
+                m.classList.remove('selected');
+            });
+            document.getElementById('confirmPayment').disabled = true;
+        }
+        
+        function processPayment(method) {
+            // Show loading state
+            const confirmBtn = document.getElementById('confirmPayment');
+            const originalText = confirmBtn.innerHTML;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memproses...';
+            confirmBtn.disabled = true;
+            
+            // Simulate payment processing
+            setTimeout(() => {
+                // Hide payment modal
+                document.getElementById('paymentModal').classList.add('hidden');
+                
+                // Show success modal
+                document.getElementById('successAmount').textContent = document.getElementById('paymentAmount').textContent;
+                
+                let methodName = '';
+                switch(method) {
+                    case 'gopay': methodName = 'GoPay'; break;
+                    case 'ovo': methodName = 'OVO'; break;
+                    case 'dana': methodName = 'Dana'; break;
+                    case 'shopeepay': methodName = 'ShopeePay'; break;
+                }
+                
+                document.getElementById('successMethod').textContent = `${methodName} • Slot B3`;
+                document.getElementById('successModal').classList.remove('hidden');
+                
+                // Reset button
+                confirmBtn.innerHTML = originalText;
+                resetPaymentSelection();
+                
+                // Update user balance (simulate deduction)
+                updateUserBalance(method);
+                
+                // Add notification
+                addNotification(
+                    'Pembayaran Berhasil', 
+                    `Pembayaran parkir Puan Akeyla sebesar Rp 15.000 berhasil via ${methodName}`,
+                    'green',
+                    'check-circle'
+                );
+                
+            }, 2000);
+        }
+        
+        function updateUserBalance(method) {
+            // In a real app, this would be an API call to update the balance
+            const currentBalance = document.getElementById('userBalance').textContent;
+            const balanceValue = parseInt(currentBalance.replace(/[^\d]/g, ''));
+            const newBalance = balanceValue - 15000;
+            
+            document.getElementById('userBalance').textContent = `Rp ${newBalance.toLocaleString('id-ID')}`;
+            
+            // Update user data in localStorage
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            userData.balance = `Rp ${newBalance.toLocaleString('id-ID')}`;
+            localStorage.setItem('userData', JSON.stringify(userData));
+        }
+
+        // ============================================
+        // FITUR REAL-TIME UPDATE
+        // ============================================
+        function updateLastUpdate() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
+        }
+        
+        function updateAvailableSlots() {
+            const availableSlots = document.querySelectorAll('.slot.available:not(.user-slot)').length;
+            document.getElementById('availableSlots').textContent = availableSlots;
+        }
+        
+        function simulateRealTimeUpdates() {
+            // Update slot availability
+            updateAvailableSlots();
+            
+            // Update time
+            updateLastUpdate();
+            
+            // Update parking duration and fee
+            updateParkingInfo();
+            
+            // Random slot status changes (for demo)
+            const slots = document.querySelectorAll('.slot:not(.user-slot)');
+            slots.forEach(slot => {
+                if (Math.random() > 0.97) { // 3% chance to change
+                    if (slot.classList.contains('available')) {
+                        slot.classList.remove('available');
+                        slot.classList.add('occupied');
+                        slot.querySelector('p:last-child').textContent = 'Terisi';
+                    } else if (slot.classList.contains('occupied')) {
+                        slot.classList.remove('occupied');
+                        slot.classList.add('available');
+                        slot.querySelector('p:last-child').textContent = 'Tersedia';
+                    }
+                }
+            });
+            
+            // Add random notifications occasionally
+            if (Math.random() > 0.95) {
+                addRandomNotification();
+            }
+        }
+        
+        function updateParkingInfo() {
+            // Simulate time passing
+            const durationElem = document.getElementById('parkingDuration');
+            const currentDuration = durationElem.textContent;
+            
+            // Simple time increment simulation
+            const parts = currentDuration.split(' ');
+            let hours = parseInt(parts[0]);
+            let minutes = parseInt(parts[2]);
+            
+            minutes += 1;
+            if (minutes >= 60) {
+                minutes = 0;
+                hours += 1;
+            }
+            
+            durationElem.textContent = `${hours} jam ${minutes} menit`;
+            
+            // Update fee based on duration (Rp 5,000 per hour)
+            const fee = 5000 + (hours * 5000);
+            document.getElementById('currentFee').textContent = `Rp ${fee.toLocaleString('id-ID')}`;
+            document.getElementById('paymentAmount').textContent = `Rp ${fee.toLocaleString('id-ID')}`;
+            document.getElementById('parkingFee').textContent = `Rp ${fee.toLocaleString('id-ID')}`;
+        }
+        
+        // Update every 5 seconds
+        setInterval(simulateRealTimeUpdates, 5000);
+        
+        // ============================================
+        // FITUR INTERAKSI SLOT
+        // ============================================
+        document.querySelectorAll('.slot').forEach(slot => {
+            slot.addEventListener('click', function() {
+                const slotId = this.getAttribute('data-slot');
+                const isAvailable = this.classList.contains('available');
+                const isUserSlot = this.classList.contains('user-slot');
+                
+                let message = `Slot ${slotId}\n`;
+                
+                if (isUserSlot) {
+                    message += "Status: Slot Puan Akeyla\n";
+                    message += "Puan Akeyla sedang parkir di slot ini";
+                } else if (isAvailable) {
+                    message += "Status: Tersedia\n";
+                    message += "Slot ini dapat digunakan untuk parkir";
+                } else {
+                    message += "Status: Terisi\n";
+                    message += "Slot ini sedang digunakan";
+                }
+                
+                // Show custom alert with better styling
+                showSlotInfo(slotId, message);
+            });
+        });
+        
+        function showSlotInfo(slotId, message) {
+            // Create custom modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Info Slot ${slotId}</h3>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-slate-400 hover:text-slate-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <p class="text-slate-600 whitespace-pre-line">${message}</p>
+                    <button onclick="this.parentElement.parentElement.remove()" class="w-full mt-4 bg-primary text-white py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity">
+                        Tutup
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        // ============================================
+        // FITUR NOTIFIKASI
+        // ============================================
+        function addRandomNotification() {
+            const notifications = [
+                {
+                    title: "Promo Pembayaran",
+                    message: "Dapatkan cashback 10% untuk pembayaran pertama via GoPay",
+                    type: "blue",
+                    icon: "info-circle"
+                },
+                {
+                    title: "Pembayaran Mudah", 
+                    message: "Bayar parkir dengan OVO, Dana, atau ShopeePay",
+                    type: "yellow",
+                    icon: "credit-card"
+                },
+                {
+                    title: "Layanan Optimal",
+                    message: "Semua sensor berfungsi dengan baik",
+                    type: "green",
+                    icon: "check-circle"
+                }
+            ];
+            
+            const notification = notifications[Math.floor(Math.random() * notifications.length)];
+            addNotification(notification.title, notification.message, notification.type, notification.icon);
+        }
+        
+        function addNotification(title, message, type, icon) {
+            const container = document.getElementById('notificationsContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification-item flex items-start p-3 bg-${type}-50 rounded-lg border-l-4 border-${type}-500`;
+            
+            notification.innerHTML = `
+                <i class="fas fa-${icon} text-${type}-600 mt-1 mr-3"></i>
+                <div>
+                    <p class="font-semibold text-slate-800">${title}</p>
+                    <p class="text-sm text-slate-600">${message}</p>
+                </div>
+            `;
+            
+            container.insertBefore(notification, container.firstChild);
+            
+            // Remove notification after 10 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 10000);
+        }
+        
+        // ============================================
+        // SIMULASI DATA USER - PUAN AKEYLA
+        // ============================================
+        // Data user dummy (dalam real application, ini dari backend)
+        const userData = {
+            name: 'Puan Akeyla',
+            rfid: 'RFID-7A3B9C',
+            status: 'parked',
+            balance: 'Rp 125.000',
+            currentSlot: 'B3',
+            parkingStart: '14:32:05',
+            vehicle: 'B 1234 XYZ'
+        };
+        
+        // Simpan ke localStorage
+        if (!localStorage.getItem('userData')) {
+            localStorage.setItem('userData', JSON.stringify(userData));
+            localStorage.setItem('userToken', 'user_logged_in');
+        }
+    </script>
+</body>
+</html>
